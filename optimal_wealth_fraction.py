@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import requests
+import xlrd
 
 
 FRED_API_KEY = os.getenv('FRED_API_KEY')
