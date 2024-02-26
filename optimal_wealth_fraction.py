@@ -1,7 +1,9 @@
+import os
 import pandas as pd
 import requests
 
-from config import FRED_API_KEY
+
+FRED_API_KEY = os.getenv('FRED_API_KEY')
 
 
 def get_shiller_pe_ratio():
@@ -35,14 +37,19 @@ def get_risk_free_rate():
     url = f'https://api.stlouisfed.org/fred/series/observations?series_id=DTP10J30&api_key={FRED_API_KEY}&frequency=d&sort_order=desc&file_type=json'
     response = requests.get(url)
     
-    risk_free_rate = float(response.json().get('observations')[0].get('value'))  # most recent 10 yr TIPS rate
-    risk_free_rate /= 100
+    try:
+        assert response.status_code == 200
     
-    return risk_free_rate
+        risk_free_rate = float(response.json().get('observations')[0].get('value'))  # most recent 10 yr TIPS rate
+        risk_free_rate /= 100
+        
+        return risk_free_rate
 
+    except AssertionError as e:
+        return None
 
 def get_market_risk_volatility():
-    df = pd.read_excel('shiller_data.xls', sheet_name='Data', skiprows=7)
+    df = pd.read_excel('Data/shiller_data.xls', sheet_name='Data', skiprows=7)
     
     df = df.dropna(subset=['Date'])
     
