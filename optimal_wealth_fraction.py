@@ -1,10 +1,12 @@
 import os
 import pandas as pd
 import requests
+import streamlit as st
 import xlrd
 
 
 FRED_API_KEY = os.getenv('FRED_API_KEY')
+# from config import FRED_API_KEY  # Remove when pushing to github
 
 
 def get_shiller_pe_ratio():
@@ -15,10 +17,8 @@ def get_shiller_pe_ratio():
     """
     url = 'http://www.econ.yale.edu/~shiller/data/ie_data.xls'
 
-    # Send a GET request to the URL
     response = requests.get(url)
     
-    # Check if the request was successful
     if response.status_code == 200:
         with open('Data/shiller_data.xls', 'wb') as file:
             file.write(response.content)
@@ -32,10 +32,10 @@ def get_shiller_pe_ratio():
         print("Failed to retrieve Shiller data document.")
         return None
     
-    
+
 def get_risk_free_rate():
     # play around with param frequency (d default): d = Daily, w = Weekly, bw = Biweekly, m = Monthly, q = Quarterly, sa = Semiannual, a = Annual
-    url = f'https://api.stlouisfed.org/fred/series/observations?series_id=DTP10J30&api_key={FRED_API_KEY}&frequency=d&sort_order=desc&file_type=json'
+    url = f'https://api.stlouisfed.org/fred/series/observations?series_id=DTP10J28&api_key={FRED_API_KEY}&frequency=d&sort_order=desc&file_type=json'
     response = requests.get(url)
     
     try:
@@ -46,8 +46,9 @@ def get_risk_free_rate():
         
         return risk_free_rate
 
-    except AssertionError as e:
+    except AssertionError:
         return None
+
 
 def get_market_risk_volatility():
     df = pd.read_excel('Data/shiller_data.xls', sheet_name='Data', skiprows=7)
@@ -68,6 +69,7 @@ def get_market_risk_volatility():
     return blended_volatility
 
 
+@st.cache_data
 def merton_share(risk_aversion):
     real_yield = 1 / get_shiller_pe_ratio()
     risk_free_rate = get_risk_free_rate()
